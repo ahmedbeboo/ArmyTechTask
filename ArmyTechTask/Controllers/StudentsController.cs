@@ -61,6 +61,8 @@ namespace ArmyTechTask.Controllers
             return View();
         }
 
+
+        // fake
         [HttpPost]
         public ActionResult GetNeighborhoodId(GovernmentInfo governmateInfo)
         {
