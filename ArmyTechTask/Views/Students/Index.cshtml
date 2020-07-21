@@ -1,0 +1,215 @@
+﻿@*@model IEnumerable<ArmyTechTask.Models.Student>*@
+@using PagedList.Mvc
+@model  PagedList.IPagedList<ArmyTechTask.Models.Student>
+
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<style>
+
+    .pagination {
+        display: inline-block;
+        padding: 0;
+        /*margin: 0;*/
+        margin: 0 auto;
+    }
+
+        .pagination li {
+            display: inline;
+        }
+
+            .pagination li a {
+                color: black;
+                float: left;
+                padding: 8px 16px;
+                text-decoration: none;
+                transition: background-color .3s;
+            }
+
+            .pagination li.active a {
+                background-color: black !important;
+                color: white;
+                border: 1px solid black;
+            }
+
+
+    .btn {
+        background-color: black;
+        color: white;
+    }
+
+        .btn:hover {
+            color: white;
+        }
+
+    table tr th {
+        text-align: center;
+    }
+</style>
+
+<h2 class="text-center">Students Info</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create", null, new { @class = "btn" })
+</p>
+
+<div style="overflow-x:scroll;">
+    <table class="table table-bordered">
+        <tr>
+            <th>
+                @Html.Label("Student")
+            </th>
+            <th>
+                @Html.Label("Student BD")
+            </th>
+            <th>
+                @Html.Label("Field")
+            </th>
+            <th>
+                @Html.Label("Government")
+            </th>
+            <th>
+                @Html.Label("Neighborhood")
+            </th>
+            <th></th>
+        </tr>
+
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @item.Name
+                </td>
+                <td>
+                    @item.BirthDate
+                </td>
+                <td>
+                    @item.Field.Name
+                </td>
+                <td>
+                    @item.Governorate.Name
+                </td>
+                <td>
+                    @{ 
+                        if (item.Neighborhood != null)
+                        {
+                            @item.Neighborhood.Name
+                        }
+                        else
+                        {
+
+                        }
+                    }
+                    
+                </td>
+                <td>
+                    @Html.ActionLink("Edit", "Edit", new { id = item.ID }, new { @class = "btn" })
+                    @*@Html.ActionLink("Delete", "Delete", new { id = item.ID }, new { @class = "btn" })*@
+
+                    <button class="btn" id="btnDelete" data-id="@item.ID" data-toggle="modal" data-target="#ModalDelete">Delete</button>
+
+                </td>
+            </tr>
+        }
+
+    </table>
+
+    <div id="container" style="margin-left: 20px">
+        <p></p>
+        <p></p>
+        <div class="pagination">
+
+
+            <span style="margin:35px 0;">
+                Page @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber)
+                of @Model.PageCount
+            </span>
+            @Html.PagedListPager(Model, page => Url.Action("Index", new { page }))
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="ModalDelete" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Student</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Confirm Delete This Student ?</p>
+                <input type="hidden" id="itemId" />
+            </div>
+            <div class="modal-footer">
+                <button onclick="deleteStudent()" class="btn">Confirm</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="loadImage" style="text-align:center; display:none; position:fixed;left:45%;top:60%;z-index:999;">
+    <img src="~/Images/loading.gif" />
+</div>
+
+@Scripts.Render("~/bundles/jquery")
+@Scripts.Render("~/bundles/bootstrap")
+
+<script type="text/javascript">
+    $(document).on("click", "#btnDelete", function () {
+        var itemId = $(this).data('id');
+
+        $(".modal-body #itemId").val(itemId);
+
+    });
+
+
+    function deleteStudent() {
+        $("#loadImage").show();
+        $(".modal-backdrop").remove();
+
+        var itemID = $(".modal-body #itemId").val();
+
+        $.ajax({
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            url: "/Students/Delete/" + itemID,
+            type: "POST",
+            //data: null,
+            cache: false,
+            dataType: "json",
+            //async: false,
+            success: function (data) {
+                $("#loadImage").hide();
+                alert(data.msg);
+
+                $("#ModalDelete").hide();
+                $(".modal-open").css("overflow", "scroll");
+                location.reload();
+
+
+            },
+            error: function (xhr, status, error) {
+                $("#loadImage").hide();
+
+                $("#ModalDelete").hide();
+                $(".modal-open").css("overflow", "scroll");
+
+                alert("An Error Occured !!!!");
+
+
+            }
+
+        });
+
+    }
+</script>
