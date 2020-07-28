@@ -73,6 +73,9 @@
             <th>
                 @Html.Label("Neighborhood")
             </th>
+            <th>
+                @Html.Label("Teachers Info")
+            </th>
             <th></th>
         </tr>
 
@@ -92,7 +95,7 @@
                     @item.Governorate.Name
                 </td>
                 <td>
-                    @{ 
+                    @{
                         if (item.Neighborhood != null)
                         {
                             @item.Neighborhood.Name
@@ -102,8 +105,20 @@
 
                         }
                     }
-                    
+
                 </td>
+                <td>
+                    @foreach (var i in item.StudentTeachers)
+                    {
+                        <p>ID: @i.TeacherId,Name:  @i.Teacher.Name</p>
+                    }
+
+                    <button class="btn" id="btnAddTeacher" data-id="@item.ID" data-toggle="modal" data-target="#ModalAddTeacher">
+                        <i class="glyphicon glyphicon-plus"></i>
+                    </button>
+
+                </td>
+
                 <td>
                     @Html.ActionLink("Edit", "Edit", new { id = item.ID }, new { @class = "btn" })
                     @*@Html.ActionLink("Delete", "Delete", new { id = item.ID }, new { @class = "btn" })*@
@@ -131,6 +146,32 @@
     </div>
 </div>
 
+
+<!-- Modal -->
+<div class="modal fade" id="ModalAddTeacher" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Teacher</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Confirm Add This Teacher ?</p>
+                @Html.DropDownList("TeachersList",(IEnumerable<SelectListItem>)ViewBag.teachers,
+                                                                                "Select Teacher", new { @class = "form-control",@id="dropdownTeachers" })
+
+                <input type="hidden" id="itemStudentId" />
+            </div>
+            <div class="modal-footer">
+                <button onclick="addTeacher()" class="btn">Confirm</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>
 
 <!-- Modal -->
 <div class="modal fade" id="ModalDelete" tabindex="-1" role="dialog" aria-hidden="true">
@@ -167,9 +208,12 @@
         var itemId = $(this).data('id');
 
         $(".modal-body #itemId").val(itemId);
-
     });
+    $(document).on("click", "#btnAddTeacher", function () {
+        var itemId = $(this).data('id');
 
+        $(".modal-body #itemStudentId").val(itemId);
+    });
 
     function deleteStudent() {
         $("#loadImage").show();
@@ -185,6 +229,57 @@
             url: "/Students/Delete/" + itemID,
             type: "POST",
             //data: null,
+            cache: false,
+            dataType: "json",
+            //async: false,
+            success: function (data) {
+                $("#loadImage").hide();
+                alert(data.msg);
+
+                $("#ModalDelete").hide();
+                $(".modal-open").css("overflow", "scroll");
+                location.reload();
+
+
+            },
+            error: function (xhr, status, error) {
+                $("#loadImage").hide();
+
+                $("#ModalDelete").hide();
+                $(".modal-open").css("overflow", "scroll");
+
+                alert("An Error Occured !!!!");
+
+
+            }
+
+        });
+
+    }
+
+
+    function addTeacher() {
+        $("#loadImage").show();
+        $(".modal-backdrop").remove();
+
+        var studentID = $(".modal-body #itemStudentId").val();
+        var teacherID = $("#dropdownTeachers option:selected").val();
+
+
+        var studentTeacherInfo = {
+            studentId: studentID,
+            teacherId: teacherID
+
+        };
+
+        $.ajax({
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            url: "/Students/AddTeacher",
+            type: "POST",
+            data: JSON.stringify(studentTeacherInfo),
             cache: false,
             dataType: "json",
             //async: false,

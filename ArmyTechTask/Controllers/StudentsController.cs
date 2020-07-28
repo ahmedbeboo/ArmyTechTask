@@ -1,14 +1,13 @@
-﻿using System;
+﻿using ArmyTechTask.BL;
+using ArmyTechTask.Models;
+using PagedList;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
 using System.Linq;
 using System.Net;
-using System.Web;
 using System.Web.Mvc;
-using ArmyTechTask.BL;
-using ArmyTechTask.Models;
-using PagedList;
 
 namespace ArmyTechTask.Controllers
 {
@@ -24,32 +23,35 @@ namespace ArmyTechTask.Controllers
 
             pageIndex = page.HasValue ? Convert.ToInt32(page) : 1;
 
+            
+
+            var query = from S in db.Students
+                       join ST in db.StudentTeachers on S.ID equals ST.ID into yG
+                       from y1 in yG.DefaultIfEmpty()
+                       select S;
+
+            var q = query.ToList();
+
+            var st = q.ToPagedList(pageIndex, pageSize);
+
+            //var students = db.Students.Include(s => s.Field).Include(s => s.Governorate).Include(s => s.Neighborhood).OrderBy(s => s.ID);
+            //var st = students.ToPagedList(pageIndex, pageSize);
+
+            var teachersList = db.Teachers.Select(t => new { t.ID, t.Name }).ToList();
 
 
-            var students = db.Students.Include(s => s.Field).Include(s => s.Governorate).Include(s => s.Neighborhood).OrderBy(s => s.ID);
-            var st = students.ToPagedList(pageIndex, pageSize);
+            List<SelectListItem> teacherList = new List<SelectListItem>();
+            foreach (var temp in teachersList)
+            {
+                teacherList.Add(new SelectListItem() { Text = temp.Name, Value = temp.ID.ToString() });
+            }
+            ViewBag.teachers = teacherList;
+
 
             return View(st);
         }
 
-        //// GET: Students/Details/5
-        //public ActionResult Details(int? id)
-        //{
-        //    if (id == null)
-        //    {
-        //        return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-        //    }
-        //    Student student = db.Students.Find(id);
-        //    if (student == null)
-        //    {
-        //        return HttpNotFound();
-        //    }
-        //    return View(student);
-        //}
-
-        // GET: Students/Create
-
-
+       
 
         public ActionResult Create()
         {
@@ -61,8 +63,6 @@ namespace ArmyTechTask.Controllers
             return View();
         }
 
-
-        // fake
         [HttpPost]
         public ActionResult GetNeighborhoodId(GovernmentInfo governmateInfo)
         {
@@ -72,6 +72,46 @@ namespace ArmyTechTask.Controllers
             {
                 res = Result
             });
+        }
+
+        [HttpPost]
+        public ActionResult AddTeacher(StudentTeacherInfo studentTeacherInfo)
+        {
+            try
+            {
+                var teacherExist = db.StudentTeachers.Where(st => st.StudentId == studentTeacherInfo.studentId && st.TeacherId == studentTeacherInfo.teacherId).FirstOrDefault();
+                if(teacherExist == null)
+                {
+                    StudentTeacher studentTeacher = new StudentTeacher();
+                    studentTeacher.TeacherId = studentTeacherInfo.teacherId;
+                    studentTeacher.StudentId = studentTeacherInfo.studentId;
+                    if (ModelState.IsValid)
+                    {
+                        db.StudentTeachers.Add(studentTeacher);
+                        db.SaveChanges();
+                    }
+
+                    return Json(new
+                    {
+                        msg = "Successfully Added This Teacher To The Student"
+                    });
+                }
+                else
+                {
+                    return Json(new
+                    {
+                        msg = "This Teacher Is Already Applied To The Student"
+                    });
+                }
+            }
+            catch
+            {
+                return Json(new
+                {
+                    msg = "Can't Add This Teacher To The Student"
+                });
+            }
+            
         }
 
         // POST: Students/Create
@@ -133,22 +173,6 @@ namespace ArmyTechTask.Controllers
             return View(student);
         }
 
-        //// GET: Students/Delete/5
-        //public ActionResult Delete(int? id)
-        //{
-        //    if (id == null)
-        //    {
-        //        return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-        //    }
-        //    Student student = db.Students.Find(id);
-        //    if (student == null)
-        //    {
-        //        return HttpNotFound();
-        //    }
-        //    return View(student);
-        //}
-
-        // POST: Students/Delete/5
 
         [HttpPost, ActionName("Delete")]
         public ActionResult DeleteConfirmed(int id)
