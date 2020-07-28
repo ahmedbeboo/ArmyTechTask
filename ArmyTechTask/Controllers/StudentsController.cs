@@ -23,12 +23,12 @@ namespace ArmyTechTask.Controllers
 
             pageIndex = page.HasValue ? Convert.ToInt32(page) : 1;
 
-            
+
 
             var query = from S in db.Students
-                       join ST in db.StudentTeachers on S.ID equals ST.ID into yG
-                       from y1 in yG.DefaultIfEmpty()
-                       select S;
+                        join ST in db.StudentTeachers on S.ID equals ST.ID into yG
+                        from y1 in yG.DefaultIfEmpty()
+                        select S;
 
             var q = query.ToList();
 
@@ -51,7 +51,7 @@ namespace ArmyTechTask.Controllers
             return View(st);
         }
 
-       
+
 
         public ActionResult Create()
         {
@@ -80,7 +80,7 @@ namespace ArmyTechTask.Controllers
             try
             {
                 var teacherExist = db.StudentTeachers.Where(st => st.StudentId == studentTeacherInfo.studentId && st.TeacherId == studentTeacherInfo.teacherId).FirstOrDefault();
-                if(teacherExist == null)
+                if (teacherExist == null)
                 {
                     StudentTeacher studentTeacher = new StudentTeacher();
                     studentTeacher.TeacherId = studentTeacherInfo.teacherId;
@@ -111,8 +111,47 @@ namespace ArmyTechTask.Controllers
                     msg = "Can't Add This Teacher To The Student"
                 });
             }
-            
+
         }
+
+        [HttpPost]
+        public ActionResult DeleteStudentTeacher(StudentTeacherInfo studentTeacherInfo)
+        {
+            try
+            {
+                StudentTeacher studentTeacher = db.StudentTeachers.Where(st=>st.StudentId==studentTeacherInfo.studentId&&st.TeacherId== studentTeacherInfo.teacherId).FirstOrDefault();
+
+                if (studentTeacher != null)
+                {
+                    db.StudentTeachers.Remove(studentTeacher);
+                    db.SaveChanges();
+
+                    return Json(new
+                    {
+                        msg = "Successfully Deleted This Teacher From The Student"
+                    });
+                }
+
+
+                else
+                {
+                    return Json(new
+                    {
+                        msg = "Can't Delete This Teacher From The Student"
+                    });
+                }
+                
+            }
+            catch
+            {
+                return Json(new
+                {
+                    msg = "Can't Delete This Teacher From The Student"
+                });
+            }
+
+        }
+
 
         // POST: Students/Create
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
@@ -177,8 +216,12 @@ namespace ArmyTechTask.Controllers
         [HttpPost, ActionName("Delete")]
         public ActionResult DeleteConfirmed(int id)
         {
+            var studentTeacherList = db.StudentTeachers.Where(st => st.StudentId == id).ToList();
+            db.StudentTeachers.RemoveRange(studentTeacherList);
+
             Student student = db.Students.Find(id);
             db.Students.Remove(student);
+
             db.SaveChanges();
 
             return Json(new
